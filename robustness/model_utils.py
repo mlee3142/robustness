@@ -50,7 +50,7 @@ class DummyModel(nn.Module):
     def forward(self, x, *args, **kwargs):
         return self.model(x)
 
-def make_and_restore_model(*_, arch, dataset, resume_path=None,
+def make_and_restore_model(*_, arch, dataset, device='cpu', resume_path=None,
          parallel=False, pytorch_pretrained=False, add_custom_forward=False):
     """
     Makes a model and (optionally) restores it from a checkpoint.
@@ -90,7 +90,7 @@ def make_and_restore_model(*_, arch, dataset, resume_path=None,
     checkpoint = None
     if resume_path and os.path.isfile(resume_path):
         print("=> loading checkpoint '{}'".format(resume_path))
-        checkpoint = ch.load(resume_path, pickle_module=dill)
+        checkpoint = ch.load(resume_path, pickle_module=dill, map_location = ch.device(device))
         
         # Makes us able to load models saved with legacy versions
         state_dict_path = 'model'
@@ -99,7 +99,7 @@ def make_and_restore_model(*_, arch, dataset, resume_path=None,
 
         sd = checkpoint[state_dict_path]
         sd = {k[len('module.'):]:v for k,v in sd.items()}
-        model.load_state_dict(sd)
+        model.load_state_dict(sd, )
         print("=> loaded checkpoint '{}' (epoch {})".format(resume_path, checkpoint['epoch']))
     elif resume_path:
         error_msg = "=> no checkpoint found at '{}'".format(resume_path)
@@ -107,7 +107,7 @@ def make_and_restore_model(*_, arch, dataset, resume_path=None,
 
     if parallel:
         model = ch.nn.DataParallel(model)
-    model = model.cuda()
+    #model = model.cuda()
 
     return model, checkpoint
 
